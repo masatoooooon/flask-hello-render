@@ -78,3 +78,94 @@
         <div class="layout-options">
             <input type="radio" id="layout_2x2" name="layout" value="2x2" checked>
             <label for="layout_2x2">2x2 (3840x2160px)</label>
+            <br>
+            <input type="radio" id="layout_4x1" name="layout" value="4x1">
+            <label for="layout_4x1">4x1 (7680x1080px)</label>
+            <br>
+            <input type="radio" id="layout_5x1" name="layout" value="5x1">
+            <label for="layout_5x1">5x1 (9600x1080px)</label>
+        </div>
+
+        <h3>3. 出力レイアウト見本</h3>
+        <canvas id="layout-sample" width="400" height="225"></canvas>
+        
+        <br>
+        <button type="submit" class="submit-button">画像を結合する</button>
+    </form>
+
+    <script>
+        // 画像プレビュー機能
+        function previewImage(input, previewId) {
+            const previewContainer = document.getElementById(previewId);
+            previewContainer.innerHTML = ''; // 中身を一旦空にする
+            if (input.files && input.files[0]) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const img = document.createElement('img');
+                    img.src = e.target.result;
+                    previewContainer.appendChild(img);
+                };
+                reader.readAsDataURL(input.files[0]);
+            } else {
+                 previewContainer.innerHTML = '<span>プレビュー</span>';
+            }
+        }
+
+        // ★新規: レイアウト見本を描画する機能
+        function drawLayoutSample(layout) {
+            const canvas = document.getElementById('layout-sample');
+            const ctx = canvas.getContext('2d');
+            const w = canvas.width;
+            const h = canvas.height;
+
+            ctx.clearRect(0, 0, w, h); // キャンバスをクリア
+            ctx.fillStyle = '#f0f0f0';
+            ctx.fillRect(0, 0, w, h);
+            
+            ctx.strokeStyle = '#888';
+            ctx.fillStyle = '#333';
+            ctx.font = 'bold 16px sans-serif';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+
+            let slots = [];
+            if (layout === '2x2') {
+                canvas.width = 320; canvas.height = 180; // 16:9比率
+                const sw = canvas.width / 2, sh = canvas.height / 2;
+                slots = [
+                    { x: 0, y: 0, w: sw, h: sh, label: '1' }, { x: sw, y: 0, w: sw, h: sh, label: '2' },
+                    { x: 0, y: sh, w: sw, h: sh, label: '3' }, { x: sw, y: sh, w: sw, h: sh, label: '4' }
+                ];
+            } else if (layout === '4x1') {
+                canvas.width = 640; canvas.height = 160;
+                const sw = canvas.width / 4, sh = canvas.height;
+                for (let i = 0; i < 4; i++) slots.push({ x: i * sw, y: 0, w: sw, h: sh, label: `${i + 1}` });
+            } else if (layout === '5x1') {
+                canvas.width = 800; canvas.height = 160;
+                const sw = canvas.width / 5, sh = canvas.height;
+                for (let i = 0; i < 5; i++) slots.push({ x: i * sw, y: 0, w: sw, h: sh, label: `${i + 1}` });
+            }
+
+            slots.forEach(slot => {
+                ctx.strokeRect(slot.x, slot.y, slot.w, slot.h);
+                ctx.fillText(`画像${slot.label}`, slot.x + slot.w / 2, slot.y + slot.h / 2);
+            });
+        }
+        
+        // ラジオボタンの変更を監視して見本を更新
+        const radioButtons = document.querySelectorAll('input[name="layout"]');
+        radioButtons.forEach(radio => {
+            radio.addEventListener('change', (event) => {
+                drawLayoutSample(event.target.value);
+            });
+        });
+
+        // 初期表示
+        document.addEventListener('DOMContentLoaded', () => {
+            const initialLayout = document.querySelector('input[name="layout"]:checked').value;
+            drawLayoutSample(initialLayout);
+        });
+    </script>
+
+</body>
+</html>
