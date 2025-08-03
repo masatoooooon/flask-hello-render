@@ -16,39 +16,46 @@
             margin-top: 2.5em;
         }
         
-        /* ★変更点: より柔軟なFlexbox設定に変更 */
         .image-slots-container {
             display: flex;
-            flex-wrap: wrap; /* 折り返しを許可 */
+            flex-wrap: wrap;
             gap: 1em;
             padding-bottom: 1em;
             justify-content: center;
         }
 
-        /* ★変更点: 固定幅をやめ、Flexboxの伸縮に任せる */
         .image-slot { 
             border: 1px solid #ccc; 
             padding: 1em;
             display: flex;
             flex-direction: column;
             align-items: center;
-            /* width: 180px; を削除 */
-            flex: 1 1 180px; /* 伸縮を許可し、基本幅を180pxに */
-            min-width: 180px; /* 最小幅を指定 */
+            width: 180px;
         }
         .slot-title { font-weight: bold; margin-bottom: 0.5em; }
 
-        .file-select-button {
-            background-color: #007bff;
-            color: white;
-            padding: 8px 12px;
-            border-radius: 5px;
+        /* ★変更点: slot-previewがボタンを兼ねるためのスタイル */
+        .slot-preview {
+            width: 160px;
+            height: 90px;
+            border: 2px dashed #ccc;
+            margin-top: 0.5em;
+            background-color: #f0f0f0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #888;
             cursor: pointer;
-            text-align: center;
-            margin-top: 5px;
+            transition: background-color 0.2s;
+            /* 背景画像としてサムネイルを表示するための設定 */
+            background-size: contain;
+            background-repeat: no-repeat;
+            background-position: center;
         }
-        .file-select-button:hover { background-color: #0056b3; }
-        input[type="file"] { display: none; }
+        .slot-preview:hover {
+            background-color: #e9e9e9;
+            border-color: #007bff;
+        }
         
         .filename-display {
             font-size: 0.8em;
@@ -57,23 +64,6 @@
             height: 2.5em;
             word-break: break-all;
             text-align: center;
-        }
-
-        .slot-preview {
-            width: 160px;
-            height: 90px;
-            border: 1px solid #ddd;
-            margin-top: 1em;
-            background-color: #f0f0f0;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: #888;
-            overflow: hidden;
-        }
-        .slot-preview img {
-            max-width: 100%;
-            max-height: 100%;
         }
 
         .center-container {
@@ -145,9 +135,10 @@
         const ctx = canvas.getContext('2d');
         let previewSources = new Array(5).fill(null);
 
+        // ★変更点: 個別サムネイルの更新ロジックを修正
         function handleFileSelect(index, input) {
             const filenameContainer = document.getElementById(`filename${index + 1}`);
-            const slotPreviewContainer = document.getElementById(`slot-preview-${index + 1}`);
+            const slotPreview = document.getElementById(`slot-preview-${index + 1}`);
 
             if (input.files && input.files[0]) {
                 const reader = new FileReader();
@@ -155,10 +146,9 @@
                     const dataUrl = e.target.result;
                     previewSources[index] = dataUrl;
                     
-                    slotPreviewContainer.innerHTML = '';
-                    const img = document.createElement('img');
-                    img.src = dataUrl;
-                    slotPreviewContainer.appendChild(img);
+                    // サムネイルエリアの背景画像として設定
+                    slotPreview.style.backgroundImage = `url('${dataUrl}')`;
+                    slotPreview.innerHTML = ''; // 中のテキストを消す
 
                     updatePreviewCanvas();
                 };
@@ -167,7 +157,9 @@
             } else {
                 previewSources[index] = null;
                 filenameContainer.textContent = '未選択';
-                slotPreviewContainer.innerHTML = '<span>サムネイル</span>';
+                // サムネイルエリアをデフォルトに戻す
+                slotPreview.style.backgroundImage = 'none';
+                slotPreview.innerHTML = '<span>画像を選択</span>';
                 updatePreviewCanvas();
             }
         }
@@ -239,6 +231,7 @@
             });
         }
         
+        // ★変更点: 動的に生成するHTMLの構造を修正
         document.addEventListener('DOMContentLoaded', () => {
             const container = document.querySelector('.image-slots-container');
             if (container.innerHTML.trim() === '') {
@@ -246,14 +239,14 @@
                     const slot = document.createElement('div');
                     slot.className = 'image-slot';
 
+                    // inputをlabelで囲む代わりに、labelのfor属性で紐付ける
                     slot.innerHTML = `
                         <label class="slot-title">画像${i}</label>
-                        <label for="image${i}" class="file-select-button">ファイルを選択</label>
+                        <label for="image${i}" id="slot-preview-${i}" class="slot-preview">
+                            <span>画像を選択</span>
+                        </label>
                         <input type="file" id="image${i}" name="image_files" accept="image/*" style="display: none;">
                         <div id="filename${i}" class="filename-display">未選択</div>
-                        <div id="slot-preview-${i}" class="slot-preview">
-                            <span>サムネイル</span>
-                        </div>
                     `;
                     
                     const input = slot.querySelector(`#image${i}`);
