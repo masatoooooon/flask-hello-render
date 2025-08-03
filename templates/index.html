@@ -16,24 +16,25 @@
             margin-top: 2.5em;
         }
         
+        /* ★変更点: より柔軟なFlexbox設定に変更 */
         .image-slots-container {
             display: flex;
+            flex-wrap: wrap; /* 折り返しを許可 */
             gap: 1em;
             padding-bottom: 1em;
             justify-content: center;
-            /* wrapを指定して、万が一画面が狭い場合は折り返すようにします */
-            flex-wrap: wrap;
         }
 
-        /* ★変更点: スロットの幅を縮小 */
+        /* ★変更点: 固定幅をやめ、Flexboxの伸縮に任せる */
         .image-slot { 
             border: 1px solid #ccc; 
             padding: 1em;
             display: flex;
             flex-direction: column;
             align-items: center;
-            width: 180px;
-            flex-shrink: 0;
+            /* width: 180px; を削除 */
+            flex: 1 1 180px; /* 伸縮を許可し、基本幅を180pxに */
+            min-width: 180px; /* 最小幅を指定 */
         }
         .slot-title { font-weight: bold; margin-bottom: 0.5em; }
 
@@ -58,7 +59,6 @@
             text-align: center;
         }
 
-        /* ★変更点: 個別サムネイルのサイズを縮小 */
         .slot-preview {
             width: 160px;
             height: 90px;
