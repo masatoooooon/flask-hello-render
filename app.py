@@ -62,7 +62,6 @@ def combine():
     try:
         files = request.files.getlist('image_files')
         layout = request.form.get('layout')
-        # ★変更点: 圧縮レベルを取得 (デフォルトは85)
         quality_level = int(request.form.get('quality', 85))
         
         if layout == "5x1": num_required = 5
@@ -84,13 +83,24 @@ def combine():
         combined_image = create_combined_image(final_sources, layout)
         
         img_io = io.BytesIO()
-        # ★変更点: qualityパラメータに選択された値を設定
         combined_image.save(img_io, 'JPEG', quality=quality_level)
         img_io.seek(0)
         
+        # ★ここからが変更点★
+        # 圧縮レベルに応じて接尾辞を決定
+        if quality_level == 95:
+            quality_suffix = 'L'
+        elif quality_level == 75:
+            quality_suffix = 'S'
+        else: # 85 or default
+            quality_suffix = 'M'
+
         jst = ZoneInfo("Asia/Tokyo")
         timestamp = datetime.now(jst).strftime("%y%m%d%H%M%S")
-        download_filename = f'{layout}_{timestamp}.jpg'
+        
+        # 新しいファイル名を作成
+        download_filename = f'{layout}_{timestamp}_{quality_suffix}.jpg'
+        # ★ここまでが変更点★
         
         return send_file(
             img_io,
