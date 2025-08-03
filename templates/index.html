@@ -84,8 +84,13 @@
             display: flex;
             gap: 2em;
         }
+        
+        /* ★変更点: 2つのボタンを横に並べるためのスタイル */
         .submit-button-container {
-             text-align: center;
+             display: flex;
+             justify-content: center;
+             align-items: center;
+             gap: 1em; /* ボタン間のスペース */
              margin-top: 1.5em;
         }
         .submit-button { 
@@ -101,6 +106,21 @@
         }
         .submit-button:hover {
             background-color: #0056b3;
+        }
+
+        /* ★新規: クリアボタンのスタイル */
+        .clear-button {
+            font-size: 1em;
+            padding: 0.6em 1.2em;
+            cursor: pointer;
+            background-color: #6c757d; /* グレー */
+            color: white;
+            border: none;
+            border-radius: 5px;
+            transition: background-color 0.2s;
+        }
+        .clear-button:hover {
+            background-color: #5a6268;
         }
 
         #output-preview-canvas { 
@@ -145,6 +165,7 @@
         
         <div class="submit-button-container">
             <button type="submit" class="submit-button">画像を結合する</button>
+            <button type="button" id="clear-button" class="clear-button">画像をクリアする</button>
         </div>
     </form>
 
@@ -177,6 +198,28 @@
                 slotPreview.innerHTML = '<span>画像を選択</span>';
                 updatePreviewCanvas();
             }
+        }
+
+        // ★新規: 画像をクリアする関数
+        function clearAllImages() {
+            for (let i = 0; i < 5; i++) {
+                // ファイル入力自体をリセット
+                const input = document.getElementById(`image${i+1}`);
+                if(input) input.value = '';
+
+                // 状態と表示をリセット
+                previewSources[i] = null;
+                const filenameContainer = document.getElementById(`filename${i + 1}`);
+                if(filenameContainer) filenameContainer.textContent = '未選択';
+                
+                const slotPreview = document.getElementById(`slot-preview-${i + 1}`);
+                if(slotPreview) {
+                    slotPreview.style.backgroundImage = 'none';
+                    slotPreview.innerHTML = '<span>画像を選択</span>';
+                }
+            }
+            // プレビューを更新
+            updatePreviewCanvas();
         }
         
         document.querySelectorAll('input[name="layout"]').forEach(radio => {
@@ -268,6 +311,7 @@
                 for (let i = 1; i <= 5; i++) {
                     const slot = document.createElement('div');
                     slot.className = 'image-slot';
+
                     slot.innerHTML = `
                         <label class="slot-title">画像${i}</label>
                         <label for="image${i}" id="slot-preview-${i}" class="slot-preview">
@@ -276,14 +320,18 @@
                         <input type="file" id="image${i}" name="image_files" accept="image/*" style="display: none;">
                         <div id="filename${i}" class="filename-display">未選択</div>
                     `;
+                    
                     const input = slot.querySelector(`#image${i}`);
                     input.addEventListener('change', (event) => handleFileSelect(i - 1, event.target));
+
                     container.appendChild(slot);
                 }
             }
             updatePreviewCanvas();
 
-            // ★変更点: フォーム送信時のローディング表示に関する記述を削除
+            // ★新規: クリアボタンにイベントを割り当てる
+            const clearBtn = document.getElementById('clear-button');
+            clearBtn.addEventListener('click', clearAllImages);
         });
     </script>
 </body>
