@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <title>画像結合アプリ</title>
+    <style>
+        body { font-family: sans-serif; margin: 2em; }
+        .image-slot { border: 1px solid #ccc; padding: 1em; margin-bottom: 1em; }
+        .layout-options { margin-top: 1em; margin-bottom: 1em; }
+    </style>
+</head>
+<body>
+    <h1>画像結合アプリ</h1>
+    
+    <form action="/combine" method="post" enctype="multipart/form-data">
+        
+        <h3>1. 画像を選択してください</h3>
+        <div class="image-slots">
+            <div class="image-slot">
+                <label for="image1">画像1:</label>
+                <input type="file" id="image1" name="image_files" accept="image/*">
+            </div>
+            <div class="image-slot">
+                <label for="image2">画像2:</label>
+                <input type="file" id="image2" name="image_files" accept="image/*">
+            </div>
+            <div class="image-slot">
+                <label for="image3">画像3:</label>
+                <input type="file" id="image3" name="image_files" accept="image/*">
+            </div>
+            <div class="image-slot">
+                <label for="image4">画像4:</label>
+                <input type="file" id="image4" name="image_files" accept="image/*">
+            </div>
+            <div class="image-slot">
+                <label for="image5">画像5:</label>
+                <input type="file" id="image5" name="image_files" accept="image/*">
+            </div>
+        </div>
+
+        <h3>2. 出力レイアウトを選択してください</h3>
+        <div class="layout-options">
+            <input type="radio" id="layout_2x2" name="layout" value="2x2" checked>
+            <label for="layout_2x2">2x2 (3840x2160px)</label>
+            <input type="radio" id="layout_4x1" name="layout" value="4x1">
+            <label for="layout_4x1">4x1 (7680x1080px)</label>
+            <input type="radio" id="layout_5x1" name="layout" value="5x1">
+            <label for="layout_5x1">5x1 (9600x1080px)</label>
+        </div>
+
+        <button type="submit" style="font-size: 1.2em; padding: 0.5em 1em;">画像を結合する</button>
+    </form>
+</body>
+</html>
