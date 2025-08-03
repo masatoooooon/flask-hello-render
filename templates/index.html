@@ -73,25 +73,20 @@
             text-align: center;
         }
 
-        /* ★変更点: .clear-slot-button のCSSを削除 */
-
         .center-container {
             display: flex;
             flex-direction: column;
             align-items: center;
         }
 
-        .layout-options { 
+        .layout-options, .quality-options { 
             margin-top: 1em; 
             margin-bottom: 1em; 
             display: flex;
             gap: 2em;
         }
         .submit-button-container {
-             display: flex;
-             justify-content: center;
-             align-items: center;
-             gap: 1em;
+             text-align: center;
              margin-top: 1.5em;
         }
         .submit-button { 
@@ -158,6 +153,24 @@
             <canvas id="output-preview-canvas"></canvas>
         </div>
         
+        <div class="center-container">
+            <h3>4. 圧縮レベルを選択してください</h3>
+            <div class="quality-options">
+                <span>
+                    <input type="radio" id="q_high" name="quality" value="95">
+                    <label for="q_high">高画質 (ファイルサイズ大)</label>
+                </span>
+                <span>
+                    <input type="radio" id="q_rec" name="quality" value="85" checked>
+                    <label for="q_rec">おすすめ (バランス)</label>
+                </span>
+                <span>
+                    <input type="radio" id="q_low" name="quality" value="75">
+                    <label for="q_low">高圧縮 (ファイルサイズ小)</label>
+                </span>
+            </div>
+        </div>
+
         <div class="submit-button-container">
             <button type="submit" class="submit-button">画像を結合する</button>
             <button type="button" id="clear-button" class="clear-button">画像をクリアする</button>
@@ -172,22 +185,18 @@
         function handleFileSelect(index, input) {
             const filenameContainer = document.getElementById(`filename${index + 1}`);
             const slotPreview = document.getElementById(`slot-preview-${index + 1}`);
-
             if (input.files && input.files[0]) {
                 const reader = new FileReader();
                 reader.onload = function(e) {
                     const dataUrl = e.target.result;
                     previewSources[index] = dataUrl;
-                    
                     slotPreview.style.backgroundImage = `url('${dataUrl}')`;
                     slotPreview.innerHTML = '';
-
                     updatePreviewCanvas();
                 };
                 reader.readAsDataURL(input.files[0]);
                 filenameContainer.textContent = input.files[0].name;
             } else {
-                // ファイル選択がキャンセルされた場合
                 previewSources[index] = null;
                 filenameContainer.textContent = '未選択';
                 slotPreview.style.backgroundImage = 'none';
@@ -196,18 +205,13 @@
             }
         }
         
-        // ★変更点: clearSingleImage関数を削除
-        
         function clearAllImages() {
             for (let i = 0; i < 5; i++) {
                 const input = document.getElementById(`image${i + 1}`);
                 if(input) input.value = '';
-
                 previewSources[i] = null;
-
                 const filenameContainer = document.getElementById(`filename${i + 1}`);
                 if(filenameContainer) filenameContainer.textContent = '未選択';
-                
                 const slotPreview = document.getElementById(`slot-preview-${i + 1}`);
                 if(slotPreview) {
                     slotPreview.style.backgroundImage = 'none';
@@ -303,8 +307,6 @@
                 for (let i = 1; i <= 5; i++) {
                     const slot = document.createElement('div');
                     slot.className = 'image-slot';
-
-                    // ★変更点: 個別クリアボタンのHTMLを削除
                     slot.innerHTML = `
                         <label class="slot-title">画像${i}</label>
                         <label for="image${i}" id="slot-preview-${i}" class="slot-preview">
@@ -313,17 +315,12 @@
                         <input type="file" id="image${i}" name="image_files" accept="image/*" style="display: none;">
                         <div id="filename${i}" class="filename-display">未選択</div>
                     `;
-                    
                     const input = slot.querySelector(`#image${i}`);
                     input.addEventListener('change', (event) => handleFileSelect(i - 1, event.target));
-                    
-                    // ★変更点: 個別クリアボタンのイベントリスナーを削除
-
                     container.appendChild(slot);
                 }
             }
             updatePreviewCanvas();
-
             const clearBtn = document.getElementById('clear-button');
             clearBtn.addEventListener('click', clearAllImages);
         });
