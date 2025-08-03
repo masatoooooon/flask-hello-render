@@ -10,22 +10,21 @@
             padding: 2em;
             max-width: 1200px; 
         }
-        h1 {
-            text-align: center;
-        }
         h3 { 
             border-bottom: 2px solid #007bff; 
             padding-bottom: 0.3em; 
             margin-top: 2.5em;
         }
         
+        /* ★変更点: 横スクロールバーを削除し、折り返し(wrap)と中央揃え(justify-content)に変更 */
         .image-slots-container {
             display: flex;
-            flex-wrap: nowrap;
+            flex-wrap: wrap;
             gap: 1em;
             padding-bottom: 1em;
-            overflow-x: auto;
+            justify-content: center;
         }
+
         .image-slot { 
             border: 1px solid #ccc; 
             padding: 1em;
@@ -104,8 +103,6 @@
     </style>
 </head>
 <body>
-    <h1>画像結合アプリ</h1>
-    
     <form action="/combine" method="post" enctype="multipart/form-data">
         
         <h3>1. 画像を選択してください</h3>
@@ -115,15 +112,15 @@
             <h3>2. 出力レイアウトを選択してください</h3>
             <div class="layout-options">
                 <span>
-                    <input type="radio" id="layout_2x2" name="layout" value="2x2" checked>
+                    <input type="radio" id="layout_2x2" name="layout" value="2x2" checked onchange="updatePreviewCanvas()">
                     <label for="layout_2x2">2x2 (3840x2160px)</label>
                 </span>
                 <span>
-                    <input type="radio" id="layout_4x1" name="layout" value="4x1">
+                    <input type="radio" id="layout_4x1" name="layout" value="4x1" onchange="updatePreviewCanvas()">
                     <label for="layout_4x1">4x1 (7680x1080px)</label>
                 </span>
                 <span>
-                    <input type="radio" id="layout_5x1" name="layout" value="5x1">
+                    <input type="radio" id="layout_5x1" name="layout" value="5x1" onchange="updatePreviewCanvas()">
                     <label for="layout_5x1">5x1 (9600x1080px)</label>
                 </span>
             </div>
@@ -140,12 +137,10 @@
     </form>
 
     <script>
-        // --- ★変更点: JavaScriptロジックを全面的に修正・改善 ---
         const canvas = document.getElementById('output-preview-canvas');
         const ctx = canvas.getContext('2d');
         let previewSources = new Array(5).fill(null);
 
-        // --- ファイル選択時の処理 ---
         function handleFileSelect(index, input) {
             const filenameContainer = document.getElementById(`filename${index + 1}`);
             const slotPreviewContainer = document.getElementById(`slot-preview-${index + 1}`);
@@ -173,12 +168,10 @@
             }
         }
         
-        // --- レイアウト変更時の処理 ---
         document.querySelectorAll('input[name="layout"]').forEach(radio => {
             radio.addEventListener('change', updatePreviewCanvas);
         });
 
-        // --- プレビュー描画のメイン関数 ---
         async function updatePreviewCanvas() {
             const layout = document.querySelector('input[name="layout"]:checked').value;
             let canvasWidth, canvasHeight, slots = [];
@@ -230,4 +223,41 @@
                     ctx.fillStyle = '#f0f0f0';
                     ctx.fillRect(slot.x, slot.y, slot.w, slot.h);
                     ctx.drawImage(img, 0, 0, img.width, img.height,
-                                  slot
+                                  slot.x + centerShift_x, slot.y + centerShift_y, img.width * ratio, img.height * ratio);
+                } else {
+                    ctx.fillStyle = '#f0f0f0';
+                    ctx.fillRect(slot.x, slot.y, slot.w, slot.h);
+                    ctx.strokeStyle = '#888';
+                    ctx.strokeRect(slot.x, slot.y, slot.w, slot.h);
+                    ctx.fillStyle = '#333';
+                    ctx.fillText(`画像${index + 1}`, slot.x + slot.w / 2, slot.y + slot.h / 2);
+                }
+            });
+        }
+        
+        document.addEventListener('DOMContentLoaded', () => {
+            const container = document.querySelector('.image-slots-container');
+            for (let i = 1; i <= 5; i++) {
+                const slot = document.createElement('div');
+                slot.className = 'image-slot';
+
+                slot.innerHTML = `
+                    <label class="slot-title">画像${i}</label>
+                    <label for="image${i}" class="file-select-button">ファイルを選択</label>
+                    <input type="file" id="image${i}" name="image_files" accept="image/*">
+                    <div id="filename${i}" class="filename-display">未選択</div>
+                    <div id="slot-preview-${i}" class="slot-preview">
+                        <span>サムネイル</span>
+                    </div>
+                `;
+                
+                const input = slot.querySelector(`#image${i}`);
+                input.addEventListener('change', (event) => handleFileSelect(i - 1, event.target));
+
+                container.appendChild(slot);
+            }
+            updatePreviewCanvas();
+        });
+    </script>
+</body>
+</html>
