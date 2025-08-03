@@ -23,7 +23,7 @@
             display: flex;
             flex-wrap: nowrap;
             gap: 1em;
-            padding: 1em 0;
+            padding-bottom: 1em;
             overflow-x: auto;
         }
         .image-slot { 
@@ -58,10 +58,28 @@
             text-align: center;
         }
         
+        /* ★新規: 個別サムネイルの表示エリアのスタイル */
+        .slot-preview {
+            width: 192px;
+            height: 108px;
+            border: 1px solid #ddd;
+            margin-top: 1em;
+            background-color: #f0f0f0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #888;
+            overflow: hidden;
+        }
+        .slot-preview img {
+            max-width: 100%;
+            max-height: 100%;
+        }
+
         .center-container {
             display: flex;
             flex-direction: column;
-            align-items: center; /* このコンテナの中身を中央揃え */
+            align-items: center;
         }
 
         .layout-options { 
@@ -71,7 +89,7 @@
             gap: 2em;
         }
         .submit-button-container {
-             text-align: center; /* 保存ボタンを中央に配置 */
+             text-align: center;
              margin-top: 2em;
         }
         .submit-button { 
@@ -94,6 +112,7 @@
         <h3>1. 画像を選択してください</h3>
         <div class="image-slots-container">
             <script>
+                // ★変更点: 各スロットに個別サムネイル表示用のdivを追加
                 for (let i = 1; i <= 5; i++) {
                     document.write(`
                         <div class="image-slot">
@@ -101,6 +120,9 @@
                             <label for="image${i}" class="file-select-button">ファイルを選択</label>
                             <input type="file" id="image${i}" name="image_files" accept="image/*" onchange="handleFileSelect(${i-1}, this)">
                             <div id="filename${i}" class="filename-display">未選択</div>
+                            <div id="slot-preview-${i}" class="slot-preview">
+                                <span>サムネイル</span>
+                            </div>
                         </div>
                     `);
                 }
@@ -140,19 +162,31 @@
         const ctx = canvas.getContext('2d');
         let previewSources = new Array(5).fill(null);
 
+        // ★変更点: ファイル選択時に個別サムネイルも更新する
         function handleFileSelect(index, input) {
             const filenameContainer = document.getElementById(`filename${index + 1}`);
+            const slotPreviewContainer = document.getElementById(`slot-preview-${index + 1}`);
+
             if (input.files && input.files[0]) {
                 const reader = new FileReader();
                 reader.onload = function(e) {
-                    previewSources[index] = e.target.result;
-                    updatePreviewCanvas();
+                    const dataUrl = e.target.result;
+                    previewSources[index] = dataUrl;
+                    
+                    // 個別サムネイルを更新
+                    slotPreviewContainer.innerHTML = ''; // 中身をクリア
+                    const img = document.createElement('img');
+                    img.src = dataUrl;
+                    slotPreviewContainer.appendChild(img);
+
+                    updatePreviewCanvas(); // メインプレビューも更新
                 };
                 reader.readAsDataURL(input.files[0]);
                 filenameContainer.textContent = input.files[0].name;
             } else {
                 previewSources[index] = null;
                 filenameContainer.textContent = '未選択';
+                slotPreviewContainer.innerHTML = '<span>サムネイル</span>'; // デフォルトに戻す
                 updatePreviewCanvas();
             }
         }
@@ -187,10 +221,10 @@
             
             const imagePromises = previewSources.map(src => {
                 if (!src) return Promise.resolve(null);
-                return new Promise((resolve, reject) => {
+                return new Promise((resolve) => {
                     const img = new Image();
                     img.onload = () => resolve(img);
-                    img.onerror = reject;
+                    img.onerror = () => resolve(null); // エラー時も解決
                     img.src = src;
                 });
             });
