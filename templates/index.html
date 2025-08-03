@@ -7,33 +7,43 @@
         body { font-family: sans-serif; margin: 2em; }
         h3 { border-bottom: 2px solid #007bff; padding-bottom: 0.3em; }
         
-        /* ★変更点: 画像スロットを横並びにする設定 */
         .image-slots-container {
             display: flex;
-            flex-wrap: wrap; /* 画面が狭い場合に折り返す */
-            gap: 1em; /* スロット間の隙間 */
+            flex-wrap: wrap;
+            gap: 1em;
         }
 
         .image-slot { 
             border: 1px solid #ccc; 
             padding: 1em;
             display: flex;
-            flex-direction: column; /* スロット内の要素を縦に並べる */
+            flex-direction: column;
             align-items: center;
-            width: 200px; /* 各スロットの幅を固定 */
+            width: 200px;
         }
         .image-slot label { font-weight: bold; margin-bottom: 0.5em; }
+        
+        /* ★新規: ファイル名表示エリアのスタイル */
+        .filename-display {
+            font-size: 0.8em;
+            color: #555;
+            margin-top: 0.8em;
+            height: 2.5em; /* 2行分程度の高さを確保 */
+            word-break: break-all; /* 長いファイル名でも折り返す */
+            text-align: center;
+        }
+
         .image-preview {
-            width: 192px;  /* 幅を固定 */
-            height: 108px; /* 高さを固定 */
+            width: 192px;
+            height: 108px;
             border: 1px solid #ddd;
-            margin-top: 1em;
+            margin-top: 0.5em;
             background-color: #f0f0f0;
             display: flex;
             align-items: center;
             justify-content: center;
             color: #888;
-            overflow: hidden; /* はみ出した部分を隠す */
+            overflow: hidden;
         }
         .image-preview img {
             max-width: 100%;
@@ -59,12 +69,12 @@
         <h3>1. 画像を選択してください</h3>
         <div class="image-slots-container">
             <script>
-                // JavaScriptで5つのスロットを動的に生成
                 for (let i = 1; i <= 5; i++) {
                     document.write(`
                         <div class="image-slot">
-                            <label for="image${i}">画像${i}:</label>
-                            <input type="file" id="image${i}" name="image_files" accept="image/*" onchange="previewImage(this, 'preview${i}')">
+                            <label for="image${i}">画像${i}</label>
+                            <input type="file" id="image${i}" name="image_files" accept="image/*" onchange="previewImage(this, 'preview${i}', 'filename${i}')">
+                            <div id="filename${i}" class="filename-display">未選択</div>
                             <div id="preview${i}" class="image-preview">
                                 <span>プレビュー</span>
                             </div>
@@ -94,31 +104,40 @@
     </form>
 
     <script>
-        // 画像プレビュー機能
-        function previewImage(input, previewId) {
+        // ★変更点: ファイル名を表示する機能を追加
+        function previewImage(input, previewId, filenameId) {
             const previewContainer = document.getElementById(previewId);
-            previewContainer.innerHTML = ''; // 中身を一旦空にする
+            const filenameContainer = document.getElementById(filenameId);
+            
+            previewContainer.innerHTML = '<span>プレビュー</span>'; // デフォルトテキスト
+            filenameContainer.textContent = '未選択'; // デフォルトテキスト
+
             if (input.files && input.files[0]) {
                 const reader = new FileReader();
                 reader.onload = function(e) {
+                    previewContainer.innerHTML = ''; // テキストを消去
                     const img = document.createElement('img');
                     img.src = e.target.result;
                     previewContainer.appendChild(img);
                 };
                 reader.readAsDataURL(input.files[0]);
-            } else {
-                 previewContainer.innerHTML = '<span>プレビュー</span>';
+                filenameContainer.textContent = input.files[0].name; // ファイル名を表示
             }
         }
 
-        // ★新規: レイアウト見本を描画する機能
+        // レイアウト見本を描画する機能 (変更なし)
         function drawLayoutSample(layout) {
             const canvas = document.getElementById('layout-sample');
             const ctx = canvas.getContext('2d');
-            const w = canvas.width;
-            const h = canvas.height;
+            let w = canvas.width;
+            let h = canvas.height;
 
-            ctx.clearRect(0, 0, w, h); // キャンバスをクリア
+            // レイアウトに応じてキャンバスサイズを調整
+            if (layout === '2x2') { w = 320; h = 180; }
+            else if (layout === '4x1') { w = 640; h = 160; }
+            else if (layout === '5x1') { w = 800; h = 160; }
+            canvas.width = w; canvas.height = h;
+
             ctx.fillStyle = '#f0f0f0';
             ctx.fillRect(0, 0, w, h);
             
@@ -130,19 +149,13 @@
 
             let slots = [];
             if (layout === '2x2') {
-                canvas.width = 320; canvas.height = 180; // 16:9比率
-                const sw = canvas.width / 2, sh = canvas.height / 2;
-                slots = [
-                    { x: 0, y: 0, w: sw, h: sh, label: '1' }, { x: sw, y: 0, w: sw, h: sh, label: '2' },
-                    { x: 0, y: sh, w: sw, h: sh, label: '3' }, { x: sw, y: sh, w: sw, h: sh, label: '4' }
-                ];
+                const sw = w / 2, sh = h / 2;
+                slots = [ { x: 0, y: 0, w: sw, h: sh, label: '1' }, { x: sw, y: 0, w: sw, h: sh, label: '2' }, { x: 0, y: sh, w: sw, h: sh, label: '3' }, { x: sw, y: sh, w: sw, h: sh, label: '4' } ];
             } else if (layout === '4x1') {
-                canvas.width = 640; canvas.height = 160;
-                const sw = canvas.width / 4, sh = canvas.height;
+                const sw = w / 4, sh = h;
                 for (let i = 0; i < 4; i++) slots.push({ x: i * sw, y: 0, w: sw, h: sh, label: `${i + 1}` });
             } else if (layout === '5x1') {
-                canvas.width = 800; canvas.height = 160;
-                const sw = canvas.width / 5, sh = canvas.height;
+                const sw = w / 5, sh = h;
                 for (let i = 0; i < 5; i++) slots.push({ x: i * sw, y: 0, w: sw, h: sh, label: `${i + 1}` });
             }
 
@@ -152,7 +165,6 @@
             });
         }
         
-        // ラジオボタンの変更を監視して見本を更新
         const radioButtons = document.querySelectorAll('input[name="layout"]');
         radioButtons.forEach(radio => {
             radio.addEventListener('change', (event) => {
@@ -160,7 +172,6 @@
             });
         });
 
-        // 初期表示
         document.addEventListener('DOMContentLoaded', () => {
             const initialLayout = document.querySelector('input[name="layout"]:checked').value;
             drawLayoutSample(initialLayout);
