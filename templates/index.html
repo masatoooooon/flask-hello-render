@@ -16,21 +16,24 @@
             margin-top: 2.5em;
         }
         
+        /* ★変更点: justify-contentを追加し、wrapを削除 */
         .image-slots-container {
             display: flex;
-            flex-wrap: wrap;
             gap: 1em;
             padding-bottom: 1em;
-            justify-content: center;
+            justify-content: center; /* 中央揃え */
+            width: 100%;
+            overflow-x: auto; /* 幅が足りない場合はスクロール（念のため） */
         }
 
+        /* ★変更点: スロットの幅を再計算して調整 */
         .image-slot { 
             border: 1px solid #ccc; 
             padding: 1em;
             display: flex;
             flex-direction: column;
             align-items: center;
-            width: 200px;
+            width: 224px; /* (サムネイル192px + 左右の余白)に合わせた幅 */
             flex-shrink: 0;
         }
         .slot-title { font-weight: bold; margin-bottom: 0.5em; }
@@ -236,10 +239,8 @@
             });
         }
         
-        // ★変更点: ページ読み込み完了時に、JavaScriptで画像スロットを生成する
         document.addEventListener('DOMContentLoaded', () => {
             const container = document.querySelector('.image-slots-container');
-            // コンテナが空の場合のみスロットを生成（二重生成を防止）
             if (container.innerHTML.trim() === '') {
                 for (let i = 1; i <= 5; i++) {
                     const slot = document.createElement('div');
