@@ -6,15 +6,17 @@
     <style>
         body { 
             font-family: sans-serif; 
-            margin: 0 auto; /* ページ全体を中央揃え */
+            margin: 0 auto;
             padding: 2em;
             max-width: 1200px; 
+        }
+        h1 {
+            text-align: center;
         }
         h3 { 
             border-bottom: 2px solid #007bff; 
             padding-bottom: 0.3em; 
-            margin-top: 2.5em; /* 各セクションのスペースを調整 */
-            text-align: center; /* ヘッダーテキストを中央揃え */
+            margin-top: 2.5em;
         }
         
         .image-slots-container {
@@ -23,7 +25,6 @@
             gap: 1em;
             padding: 1em 0;
             overflow-x: auto;
-            justify-content: center; /* スロット全体を中央に配置 */
         }
         .image-slot { 
             border: 1px solid #ccc; 
@@ -57,11 +58,10 @@
             text-align: center;
         }
         
-        /* ★変更点: 中央揃えのためのコンテナ */
         .center-container {
             display: flex;
             flex-direction: column;
-            align-items: center;
+            align-items: center; /* このコンテナの中身を中央揃え */
         }
 
         .layout-options { 
@@ -70,10 +70,13 @@
             display: flex;
             gap: 2em;
         }
+        .submit-button-container {
+             text-align: center; /* 保存ボタンを中央に配置 */
+             margin-top: 2em;
+        }
         .submit-button { 
             font-size: 1.2em; 
             padding: 0.5em 1em; 
-            margin-top: 2em; 
             cursor: pointer; 
         }
         #output-preview-canvas { 
@@ -84,11 +87,9 @@
     </style>
 </head>
 <body>
-    <div style="text-align: center;">
-        <h1>画像結合アプリ</h1>
-    </div>
+    <h1>画像結合アプリ</h1>
     
-    <form action="/combine" method="post" enctype="multipart/form-data" class="center-container">
+    <form action="/combine" method="post" enctype="multipart/form-data">
         
         <h3>1. 画像を選択してください</h3>
         <div class="image-slots-container">
@@ -129,7 +130,9 @@
             <canvas id="output-preview-canvas"></canvas>
         </div>
         
-        <button type="submit" class="submit-button">画像を結合する</button>
+        <div class="submit-button-container">
+            <button type="submit" class="submit-button">画像を結合する</button>
+        </div>
     </form>
 
     <script>
