@@ -15,11 +15,11 @@ def generate_source_image(data):
     if hasattr(data, 'filename') and data.filename != '': # データがファイルの場合
         try:
             image = Image.open(data.stream)
+            # ★★★ここが縦長画像を反時計回りに90度回転させる処理です★★★
             if image.height > image.width:
                 image = image.rotate(90, expand=True)
             return image.resize((w, h), Image.Resampling.LANCZOS)
         except:
-            # 不正な画像ファイルの場合はNoneを返す
             return None
     elif isinstance(data, tuple): # データが色タプルの場合
         return Image.new("RGB", (w, h), color=data)
@@ -64,22 +64,17 @@ def index():
 @app.route('/combine', methods=['POST'])
 def combine():
     try:
-        # フォームからデータを取得
         files = request.files.getlist('image_files')
         layout = request.form.get('layout')
         
-        # レイアウトに応じて必要な画像の数を決定
         if layout == "5x1": num_required = 5
         elif layout == "4x1": num_required = 4
         else: num_required = 4
         
-        # 最終的なソースリストを作成
         final_sources = list(files)
         used_colors = set()
 
-        # 空のスロットにランダム色を割り当て
         for i in range(num_required):
-            # ファイルがアップロードされていないスロットをNoneに
             if i >= len(final_sources) or not final_sources[i].filename:
                 final_sources.insert(i, None)
 
@@ -90,15 +85,12 @@ def combine():
                 used_colors.add(random_color)
                 final_sources[i] = random_color
         
-        # 画像を結合
         combined_image = create_combined_image(final_sources, layout)
         
-        # 画像をメモリ上に保存
         img_io = io.BytesIO()
         combined_image.save(img_io, 'JPEG', quality=95)
         img_io.seek(0)
         
-        # ユーザーにファイルをダウンロードさせる
         return send_file(
             img_io,
             mimetype='image/jpeg',
