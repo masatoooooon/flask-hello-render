@@ -20,12 +20,30 @@
             align-items: center;
             width: 200px;
         }
-        .image-slot label { font-weight: bold; margin-bottom: 0.5em; }
+        .slot-title { font-weight: bold; margin-bottom: 0.5em; }
+
+        /* ★変更点: ファイル選択ボタンのスタイル */
+        .file-select-button {
+            background-color: #007bff;
+            color: white;
+            padding: 8px 12px;
+            border-radius: 5px;
+            cursor: pointer;
+            text-align: center;
+            margin-top: 5px;
+        }
+        .file-select-button:hover {
+            background-color: #0056b3;
+        }
+        input[type="file"] {
+            display: none; /* 元のボタンは隠す */
+        }
+        
         .filename-display {
             font-size: 0.8em;
             color: #555;
             margin-top: 0.8em;
-            height: 2.5em; 
+            height: 2.5em;
             word-break: break-all;
             text-align: center;
         }
@@ -50,11 +68,11 @@
         <h3>1. 画像を選択してください</h3>
         <div class="image-slots-container">
             <script>
-                // JavaScriptで5つの画像選択スロットを生成
                 for (let i = 1; i <= 5; i++) {
                     document.write(`
                         <div class="image-slot">
-                            <label for="image${i}">画像${i}</label>
+                            <label class="slot-title">画像${i}</label>
+                            <label for="image${i}" class="file-select-button">ファイルを選択</label>
                             <input type="file" id="image${i}" name="image_files" accept="image/*" onchange="handleFileSelect(${i-1}, this)">
                             <div id="filename${i}" class="filename-display">未選択</div>
                         </div>
@@ -65,13 +83,13 @@
 
         <h3>2. 出力レイアウトを選択してください</h3>
         <div class="layout-options">
-            <input type="radio" id="layout_2x2" name="layout" value="2x2" checked onchange="handleLayoutChange()">
+            <input type="radio" id="layout_2x2" name="layout" value="2x2" checked onchange="updatePreviewCanvas()">
             <label for="layout_2x2">2x2 (3840x2160px)</label>
             <br>
-            <input type="radio" id="layout_4x1" name="layout" value="4x1" onchange="handleLayoutChange()">
+            <input type="radio" id="layout_4x1" name="layout" value="4x1" onchange="updatePreviewCanvas()">
             <label for="layout_4x1">4x1 (7680x1080px)</label>
             <br>
-            <input type="radio" id="layout_5x1" name="layout" value="5x1" onchange="handleLayoutChange()">
+            <input type="radio" id="layout_5x1" name="layout" value="5x1" onchange="updatePreviewCanvas()">
             <label for="layout_5x1">5x1 (9600x1080px)</label>
         </div>
 
@@ -86,41 +104,32 @@
         // --- グローバル変数 ---
         const canvas = document.getElementById('output-preview-canvas');
         const ctx = canvas.getContext('2d');
-        let previewSources = new Array(5).fill(null); // 5つの画像ソースを保持する配列
+        let previewSources = new Array(5).fill(null);
 
-        // --- ファイル選択時の処理 ---
+        // --- ★変更点: ファイル選択時の処理を修正 ---
         function handleFileSelect(index, input) {
             const filenameContainer = document.getElementById(`filename${index + 1}`);
             if (input.files && input.files[0]) {
                 const reader = new FileReader();
                 reader.onload = function(e) {
-                    const img = new Image();
-                    img.onload = () => {
-                        previewSources[index] = img; // 画像オブジェクトを保存
-                        updatePreviewCanvas(); // キャンバスを再描画
-                    };
-                    img.src = e.target.result;
+                    // 画像のデータURLを配列に保存
+                    previewSources[index] = e.target.result;
+                    updatePreviewCanvas(); // キャンバスを再描画
                 };
                 reader.readAsDataURL(input.files[0]);
                 filenameContainer.textContent = input.files[0].name;
             } else {
-                previewSources[index] = null; // 選択がキャンセルされたらリセット
+                previewSources[index] = null;
                 filenameContainer.textContent = '未選択';
                 updatePreviewCanvas();
             }
         }
-
-        // --- レイアウト変更時の処理 ---
-        function handleLayoutChange() {
-            updatePreviewCanvas();
-        }
-
-        // --- メインのプレビュー描画関数 ---
+        
+        // --- ★変更点: プレビュー描画のロジックを全体的に修正・改善 ---
         function updatePreviewCanvas() {
             const layout = document.querySelector('input[name="layout"]:checked').value;
             let canvasWidth, canvasHeight, slots = [];
             
-            // ★変更点: 各レイアウトでスロットが16:9になるようにサイズを計算
             const slotHeight = 90;
             const slotWidth = 160;
 
@@ -140,23 +149,29 @@
 
             canvas.width = canvasWidth;
             canvas.height = canvasHeight;
-
+            
             ctx.font = 'bold 16px sans-serif';
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
-
+            
+            let imagesToLoad = slots.length;
+            
+            // 全スロットを描画
             slots.forEach((slot, index) => {
-                const imageSource = previewSources[index];
-                if (imageSource) {
-                    // ★変更点: 画像が選択されていれば、それを描画
-                    const hRatio = slot.w / imageSource.width;
-                    const vRatio = slot.h / imageSource.height;
-                    const ratio = Math.min(hRatio, vRatio);
-                    const centerShift_x = (slot.w - imageSource.width * ratio) / 2;
-                    const centerShift_y = (slot.h - imageSource.height * ratio) / 2;
-                    ctx.clearRect(slot.x, slot.y, slot.w, slot.h);
-                    ctx.drawImage(imageSource, 0, 0, imageSource.width, imageSource.height,
-                                  slot.x + centerShift_x, slot.y + centerShift_y, imageSource.width * ratio, imageSource.height * ratio);
+                const dataUrl = previewSources[index];
+                if (dataUrl) {
+                    const img = new Image();
+                    img.onload = () => {
+                        const hRatio = slot.w / img.width;
+                        const vRatio = slot.h / img.height;
+                        const ratio = Math.min(hRatio, vRatio);
+                        const centerShift_x = (slot.w - img.width * ratio) / 2;
+                        const centerShift_y = (slot.h - img.height * ratio) / 2;
+                        ctx.clearRect(slot.x, slot.y, slot.w, slot.h); // 念のためクリア
+                        ctx.drawImage(img, 0, 0, img.width, img.height,
+                                      slot.x + centerShift_x, slot.y + centerShift_y, img.width * ratio, img.height * ratio);
+                    };
+                    img.src = dataUrl;
                 } else {
                     // 画像がなければ、見本を描画
                     ctx.fillStyle = '#f0f0f0';
@@ -169,7 +184,12 @@
             });
         }
         
-        // 初期表示
+        // ラジオボタン変更時にプレビューを更新
+        document.querySelectorAll('input[name="layout"]').forEach(radio => {
+            radio.addEventListener('change', updatePreviewCanvas);
+        });
+
+        // ページ読み込み完了時に初期プレビューを描画
         document.addEventListener('DOMContentLoaded', updatePreviewCanvas);
     </script>
 </body>
