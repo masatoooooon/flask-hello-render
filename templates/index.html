@@ -16,24 +16,23 @@
             margin-top: 2.5em;
         }
         
-        /* ★変更点: justify-contentを追加し、wrapを削除 */
         .image-slots-container {
             display: flex;
             gap: 1em;
             padding-bottom: 1em;
-            justify-content: center; /* 中央揃え */
-            width: 100%;
-            overflow-x: auto; /* 幅が足りない場合はスクロール（念のため） */
+            justify-content: center;
+            /* wrapを指定して、万が一画面が狭い場合は折り返すようにします */
+            flex-wrap: wrap;
         }
 
-        /* ★変更点: スロットの幅を再計算して調整 */
+        /* ★変更点: スロットの幅を縮小 */
         .image-slot { 
             border: 1px solid #ccc; 
             padding: 1em;
             display: flex;
             flex-direction: column;
             align-items: center;
-            width: 224px; /* (サムネイル192px + 左右の余白)に合わせた幅 */
+            width: 180px;
             flex-shrink: 0;
         }
         .slot-title { font-weight: bold; margin-bottom: 0.5em; }
@@ -59,9 +58,10 @@
             text-align: center;
         }
 
+        /* ★変更点: 個別サムネイルのサイズを縮小 */
         .slot-preview {
-            width: 192px;
-            height: 108px;
+            width: 160px;
+            height: 90px;
             border: 1px solid #ddd;
             margin-top: 1em;
             background-color: #f0f0f0;
