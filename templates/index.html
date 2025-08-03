@@ -56,7 +56,7 @@
             background-size: contain;
             background-repeat: no-repeat;
             background-position: center;
-            position: relative; /* ★変更点: 子要素を絶対配置するための基準 */
+            position: relative;
         }
         .slot-preview:hover {
             background-color: #e9e9e9;
@@ -73,14 +73,13 @@
             text-align: center;
         }
 
-        /* ★新規: 個別クリアボタンのスタイル */
         .clear-slot-button {
             position: absolute;
             top: -10px;
             right: -10px;
             width: 24px;
             height: 24px;
-            background-color: #dc3545; /* 赤色 */
+            background-color: #dc3545;
             color: white;
             border: 2px solid white;
             border-radius: 50%;
@@ -189,6 +188,7 @@
         const ctx = canvas.getContext('2d');
         let previewSources = new Array(5).fill(null);
 
+        // ★変更点: この関数内にクリアボタンを表示/非表示するロジックを追加
         function handleFileSelect(index, input) {
             const filenameContainer = document.getElementById(`filename${index + 1}`);
             const slotPreview = document.getElementById(`slot-preview-${index + 1}`);
@@ -202,25 +202,24 @@
                     
                     slotPreview.style.backgroundImage = `url('${dataUrl}')`;
                     slotPreview.innerHTML = '';
-                    clearButton.style.display = 'block'; // ★変更点: ボタンを表示
+                    clearButton.style.display = 'block'; // ボタンを表示
 
                     updatePreviewCanvas();
                 };
                 reader.readAsDataURL(input.files[0]);
                 filenameContainer.textContent = input.files[0].name;
             } else {
-                clearSingleImage(index); // ファイル選択がキャンセルされた場合もクリア処理を呼ぶ
+                clearSingleImage(index);
             }
         }
 
-        // ★新規: 個別の画像をクリアする関数
         function clearSingleImage(index) {
             const input = document.getElementById(`image${index + 1}`);
             const filenameContainer = document.getElementById(`filename${index + 1}`);
             const slotPreview = document.getElementById(`slot-preview-${index + 1}`);
             const clearButton = document.getElementById(`clear-slot-${index + 1}`);
 
-            input.value = ''; // ファイル入力をリセット
+            input.value = '';
             previewSources[index] = null;
             filenameContainer.textContent = '未選択';
             slotPreview.style.backgroundImage = 'none';
@@ -323,7 +322,6 @@
                     const slot = document.createElement('div');
                     slot.className = 'image-slot';
 
-                    // ★変更点: 個別クリアボタンのHTMLを追加
                     slot.innerHTML = `
                         <label class="slot-title">画像${i}</label>
                         <label for="image${i}" id="slot-preview-${i}" class="slot-preview">
@@ -337,11 +335,10 @@
                     const input = slot.querySelector(`#image${i}`);
                     input.addEventListener('change', (event) => handleFileSelect(i - 1, event.target));
                     
-                    // ★新規: 個別クリアボタンにイベントを割り当てる
                     const clearButton = slot.querySelector(`#clear-slot-${i}`);
                     clearButton.addEventListener('click', (event) => {
-                        event.preventDefault(); // labelの動作をキャンセル
-                        event.stopPropagation(); // イベントの伝播を停止
+                        event.preventDefault();
+                        event.stopPropagation();
                         clearSingleImage(i - 1);
                     });
 
