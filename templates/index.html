@@ -57,8 +57,7 @@
             word-break: break-all;
             text-align: center;
         }
-        
-        /* ★新規: 個別サムネイルの表示エリアのスタイル */
+
         .slot-preview {
             width: 192px;
             height: 108px;
@@ -110,38 +109,21 @@
     <form action="/combine" method="post" enctype="multipart/form-data">
         
         <h3>1. 画像を選択してください</h3>
-        <div class="image-slots-container">
-            <script>
-                // ★変更点: 各スロットに個別サムネイル表示用のdivを追加
-                for (let i = 1; i <= 5; i++) {
-                    document.write(`
-                        <div class="image-slot">
-                            <label class="slot-title">画像${i}</label>
-                            <label for="image${i}" class="file-select-button">ファイルを選択</label>
-                            <input type="file" id="image${i}" name="image_files" accept="image/*" onchange="handleFileSelect(${i-1}, this)">
-                            <div id="filename${i}" class="filename-display">未選択</div>
-                            <div id="slot-preview-${i}" class="slot-preview">
-                                <span>サムネイル</span>
-                            </div>
-                        </div>
-                    `);
-                }
-            </script>
-        </div>
+        <div class="image-slots-container"></div>
 
         <div class="center-container">
             <h3>2. 出力レイアウトを選択してください</h3>
             <div class="layout-options">
                 <span>
-                    <input type="radio" id="layout_2x2" name="layout" value="2x2" checked onchange="updatePreviewCanvas()">
+                    <input type="radio" id="layout_2x2" name="layout" value="2x2" checked>
                     <label for="layout_2x2">2x2 (3840x2160px)</label>
                 </span>
                 <span>
-                    <input type="radio" id="layout_4x1" name="layout" value="4x1" onchange="updatePreviewCanvas()">
+                    <input type="radio" id="layout_4x1" name="layout" value="4x1">
                     <label for="layout_4x1">4x1 (7680x1080px)</label>
                 </span>
                 <span>
-                    <input type="radio" id="layout_5x1" name="layout" value="5x1" onchange="updatePreviewCanvas()">
+                    <input type="radio" id="layout_5x1" name="layout" value="5x1">
                     <label for="layout_5x1">5x1 (9600x1080px)</label>
                 </span>
             </div>
@@ -158,11 +140,12 @@
     </form>
 
     <script>
+        // --- ★変更点: JavaScriptロジックを全面的に修正・改善 ---
         const canvas = document.getElementById('output-preview-canvas');
         const ctx = canvas.getContext('2d');
         let previewSources = new Array(5).fill(null);
 
-        // ★変更点: ファイル選択時に個別サムネイルも更新する
+        // --- ファイル選択時の処理 ---
         function handleFileSelect(index, input) {
             const filenameContainer = document.getElementById(`filename${index + 1}`);
             const slotPreviewContainer = document.getElementById(`slot-preview-${index + 1}`);
@@ -173,28 +156,29 @@
                     const dataUrl = e.target.result;
                     previewSources[index] = dataUrl;
                     
-                    // 個別サムネイルを更新
-                    slotPreviewContainer.innerHTML = ''; // 中身をクリア
+                    slotPreviewContainer.innerHTML = '';
                     const img = document.createElement('img');
                     img.src = dataUrl;
                     slotPreviewContainer.appendChild(img);
 
-                    updatePreviewCanvas(); // メインプレビューも更新
+                    updatePreviewCanvas();
                 };
                 reader.readAsDataURL(input.files[0]);
                 filenameContainer.textContent = input.files[0].name;
             } else {
                 previewSources[index] = null;
                 filenameContainer.textContent = '未選択';
-                slotPreviewContainer.innerHTML = '<span>サムネイル</span>'; // デフォルトに戻す
+                slotPreviewContainer.innerHTML = '<span>サムネイル</span>';
                 updatePreviewCanvas();
             }
         }
         
+        // --- レイアウト変更時の処理 ---
         document.querySelectorAll('input[name="layout"]').forEach(radio => {
             radio.addEventListener('change', updatePreviewCanvas);
         });
 
+        // --- プレビュー描画のメイン関数 ---
         async function updatePreviewCanvas() {
             const layout = document.querySelector('input[name="layout"]:checked').value;
             let canvasWidth, canvasHeight, slots = [];
@@ -224,7 +208,7 @@
                 return new Promise((resolve) => {
                     const img = new Image();
                     img.onload = () => resolve(img);
-                    img.onerror = () => resolve(null); // エラー時も解決
+                    img.onerror = () => resolve(null);
                     img.src = src;
                 });
             });
@@ -246,19 +230,4 @@
                     ctx.fillStyle = '#f0f0f0';
                     ctx.fillRect(slot.x, slot.y, slot.w, slot.h);
                     ctx.drawImage(img, 0, 0, img.width, img.height,
-                                  slot.x + centerShift_x, slot.y + centerShift_y, img.width * ratio, img.height * ratio);
-                } else {
-                    ctx.fillStyle = '#f0f0f0';
-                    ctx.fillRect(slot.x, slot.y, slot.w, slot.h);
-                    ctx.strokeStyle = '#888';
-                    ctx.strokeRect(slot.x, slot.y, slot.w, slot.h);
-                    ctx.fillStyle = '#333';
-                    ctx.fillText(`画像${index + 1}`, slot.x + slot.w / 2, slot.y + slot.h / 2);
-                }
-            });
-        }
-        
-        document.addEventListener('DOMContentLoaded', updatePreviewCanvas);
-    </script>
-</body>
-</html>
+                                  slot
