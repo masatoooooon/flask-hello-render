@@ -7,11 +7,15 @@
         body { font-family: sans-serif; margin: 2em; max-width: 1200px; }
         h3 { border-bottom: 2px solid #007bff; padding-bottom: 0.3em; margin-top: 2em;}
         
+        /* ★変更点: 横スクロールとレイアウト崩れ防止 */
         .image-slots-container {
             display: flex;
-            flex-wrap: wrap;
+            flex-wrap: nowrap; /* 折り返さないように設定 */
             gap: 1em;
+            padding-bottom: 1em;
+            overflow-x: auto; /* はみ出した場合に横スクロールバーを表示 */
         }
+
         .image-slot { 
             border: 1px solid #ccc; 
             padding: 1em;
@@ -19,10 +23,10 @@
             flex-direction: column;
             align-items: center;
             width: 200px;
+            flex-shrink: 0; /* スロットが縮まないように設定 */
         }
         .slot-title { font-weight: bold; margin-bottom: 0.5em; }
 
-        /* ★変更点: ファイル選択ボタンのスタイル */
         .file-select-button {
             background-color: #007bff;
             color: white;
@@ -32,12 +36,8 @@
             text-align: center;
             margin-top: 5px;
         }
-        .file-select-button:hover {
-            background-color: #0056b3;
-        }
-        input[type="file"] {
-            display: none; /* 元のボタンは隠す */
-        }
+        .file-select-button:hover { background-color: #0056b3; }
+        input[type="file"] { display: none; }
         
         .filename-display {
             font-size: 0.8em;
@@ -48,16 +48,8 @@
             text-align: center;
         }
         .layout-options { margin-top: 1em; margin-bottom: 1em; }
-        .submit-button {
-            font-size: 1.2em;
-            padding: 0.5em 1em;
-            margin-top: 1em;
-            cursor: pointer;
-        }
-        #output-preview-canvas {
-            border: 2px solid #007bff;
-            background-color: #f0f0f0;
-        }
+        .submit-button { font-size: 1.2em; padding: 0.5em 1em; margin-top: 1em; cursor: pointer; }
+        #output-preview-canvas { border: 2px solid #007bff; background-color: #f0f0f0; }
     </style>
 </head>
 <body>
@@ -65,7 +57,6 @@
     
     <form action="/combine" method="post" enctype="multipart/form-data">
         
-        <h3>1. 画像を選択してください</h3>
         <div class="image-slots-container">
             <script>
                 for (let i = 1; i <= 5; i++) {
@@ -106,15 +97,16 @@
         const ctx = canvas.getContext('2d');
         let previewSources = new Array(5).fill(null);
 
-        // --- ★変更点: ファイル選択時の処理を修正 ---
+        // --- ★変更点: プレビューのバグを修正するための新しいロジック ---
+
+        // ファイル選択時の処理
         function handleFileSelect(index, input) {
             const filenameContainer = document.getElementById(`filename${index + 1}`);
             if (input.files && input.files[0]) {
                 const reader = new FileReader();
                 reader.onload = function(e) {
-                    // 画像のデータURLを配列に保存
-                    previewSources[index] = e.target.result;
-                    updatePreviewCanvas(); // キャンバスを再描画
+                    previewSources[index] = e.target.result; // 画像データをURLとして保存
+                    updatePreviewCanvas();
                 };
                 reader.readAsDataURL(input.files[0]);
                 filenameContainer.textContent = input.files[0].name;
@@ -125,8 +117,13 @@
             }
         }
         
-        // --- ★変更点: プレビュー描画のロジックを全体的に修正・改善 ---
-        function updatePreviewCanvas() {
+        // レイアウト変更時の処理
+        document.querySelectorAll('input[name="layout"]').forEach(radio => {
+            radio.addEventListener('change', updatePreviewCanvas);
+        });
+
+        // プレビュー描画のメイン関数
+        async function updatePreviewCanvas() {
             const layout = document.querySelector('input[name="layout"]:checked').value;
             let canvasWidth, canvasHeight, slots = [];
             
@@ -150,30 +147,37 @@
             canvas.width = canvasWidth;
             canvas.height = canvasHeight;
             
+            // 画像の読み込みを待つためのPromiseを作成
+            const imagePromises = previewSources.map(src => {
+                if (!src) return Promise.resolve(null);
+                return new Promise((resolve, reject) => {
+                    const img = new Image();
+                    img.onload = () => resolve(img);
+                    img.onerror = reject;
+                    img.src = src;
+                });
+            });
+
+            // 全ての画像の読み込みが完了してから描画する
+            const loadedImages = await Promise.all(imagePromises);
+            
             ctx.font = 'bold 16px sans-serif';
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
             
-            let imagesToLoad = slots.length;
-            
-            // 全スロットを描画
             slots.forEach((slot, index) => {
-                const dataUrl = previewSources[index];
-                if (dataUrl) {
-                    const img = new Image();
-                    img.onload = () => {
-                        const hRatio = slot.w / img.width;
-                        const vRatio = slot.h / img.height;
-                        const ratio = Math.min(hRatio, vRatio);
-                        const centerShift_x = (slot.w - img.width * ratio) / 2;
-                        const centerShift_y = (slot.h - img.height * ratio) / 2;
-                        ctx.clearRect(slot.x, slot.y, slot.w, slot.h); // 念のためクリア
-                        ctx.drawImage(img, 0, 0, img.width, img.height,
-                                      slot.x + centerShift_x, slot.y + centerShift_y, img.width * ratio, img.height * ratio);
-                    };
-                    img.src = dataUrl;
+                const img = loadedImages[index];
+                if (img) {
+                    const hRatio = slot.w / img.width;
+                    const vRatio = slot.h / img.height;
+                    const ratio = Math.min(hRatio, vRatio);
+                    const centerShift_x = (slot.w - img.width * ratio) / 2;
+                    const centerShift_y = (slot.h - img.height * ratio) / 2;
+                    ctx.fillStyle = '#f0f0f0';
+                    ctx.fillRect(slot.x, slot.y, slot.w, slot.h);
+                    ctx.drawImage(img, 0, 0, img.width, img.height,
+                                  slot.x + centerShift_x, slot.y + centerShift_y, img.width * ratio, img.height * ratio);
                 } else {
-                    // 画像がなければ、見本を描画
                     ctx.fillStyle = '#f0f0f0';
                     ctx.fillRect(slot.x, slot.y, slot.w, slot.h);
                     ctx.strokeStyle = '#888';
@@ -184,12 +188,7 @@
             });
         }
         
-        // ラジオボタン変更時にプレビューを更新
-        document.querySelectorAll('input[name="layout"]').forEach(radio => {
-            radio.addEventListener('change', updatePreviewCanvas);
-        });
-
-        // ページ読み込み完了時に初期プレビューを描画
+        // 初期表示
         document.addEventListener('DOMContentLoaded', updatePreviewCanvas);
     </script>
 </body>
