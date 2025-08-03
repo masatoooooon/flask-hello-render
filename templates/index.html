@@ -7,15 +7,13 @@
         body { font-family: sans-serif; margin: 2em; max-width: 1200px; }
         h3 { border-bottom: 2px solid #007bff; padding-bottom: 0.3em; margin-top: 2em;}
         
-        /* ★変更点: 横スクロールとレイアウト崩れ防止 */
         .image-slots-container {
             display: flex;
-            flex-wrap: nowrap; /* 折り返さないように設定 */
+            flex-wrap: nowrap;
             gap: 1em;
             padding-bottom: 1em;
-            overflow-x: auto; /* はみ出した場合に横スクロールバーを表示 */
+            overflow-x: auto;
         }
-
         .image-slot { 
             border: 1px solid #ccc; 
             padding: 1em;
@@ -23,7 +21,7 @@
             flex-direction: column;
             align-items: center;
             width: 200px;
-            flex-shrink: 0; /* スロットが縮まないように設定 */
+            flex-shrink: 0;
         }
         .slot-title { font-weight: bold; margin-bottom: 0.5em; }
 
@@ -47,7 +45,15 @@
             word-break: break-all;
             text-align: center;
         }
-        .layout-options { margin-top: 1em; margin-bottom: 1em; }
+        
+        /* ★変更点: レイアウトオプションを横並びにする設定 */
+        .layout-options { 
+            margin-top: 1em; 
+            margin-bottom: 1em; 
+            display: flex; /* 横並びにする */
+            gap: 2em;      /* 各項目間のスペース */
+            align-items: center;
+        }
         .submit-button { font-size: 1.2em; padding: 0.5em 1em; margin-top: 1em; cursor: pointer; }
         #output-preview-canvas { border: 2px solid #007bff; background-color: #f0f0f0; }
     </style>
@@ -74,14 +80,18 @@
 
         <h3>2. 出力レイアウトを選択してください</h3>
         <div class="layout-options">
-            <input type="radio" id="layout_2x2" name="layout" value="2x2" checked onchange="updatePreviewCanvas()">
-            <label for="layout_2x2">2x2 (3840x2160px)</label>
-            <br>
-            <input type="radio" id="layout_4x1" name="layout" value="4x1" onchange="updatePreviewCanvas()">
-            <label for="layout_4x1">4x1 (7680x1080px)</label>
-            <br>
-            <input type="radio" id="layout_5x1" name="layout" value="5x1" onchange="updatePreviewCanvas()">
-            <label for="layout_5x1">5x1 (9600x1080px)</label>
+            <span>
+                <input type="radio" id="layout_2x2" name="layout" value="2x2" checked onchange="updatePreviewCanvas()">
+                <label for="layout_2x2">2x2 (3840x2160px)</label>
+            </span>
+            <span>
+                <input type="radio" id="layout_4x1" name="layout" value="4x1" onchange="updatePreviewCanvas()">
+                <label for="layout_4x1">4x1 (7680x1080px)</label>
+            </span>
+            <span>
+                <input type="radio" id="layout_5x1" name="layout" value="5x1" onchange="updatePreviewCanvas()">
+                <label for="layout_5x1">5x1 (9600x1080px)</label>
+            </span>
         </div>
 
         <h3>3. プレビュー</h3>
@@ -92,20 +102,16 @@
     </form>
 
     <script>
-        // --- グローバル変数 ---
         const canvas = document.getElementById('output-preview-canvas');
         const ctx = canvas.getContext('2d');
         let previewSources = new Array(5).fill(null);
 
-        // --- ★変更点: プレビューのバグを修正するための新しいロジック ---
-
-        // ファイル選択時の処理
         function handleFileSelect(index, input) {
             const filenameContainer = document.getElementById(`filename${index + 1}`);
             if (input.files && input.files[0]) {
                 const reader = new FileReader();
                 reader.onload = function(e) {
-                    previewSources[index] = e.target.result; // 画像データをURLとして保存
+                    previewSources[index] = e.target.result;
                     updatePreviewCanvas();
                 };
                 reader.readAsDataURL(input.files[0]);
@@ -117,12 +123,10 @@
             }
         }
         
-        // レイアウト変更時の処理
         document.querySelectorAll('input[name="layout"]').forEach(radio => {
             radio.addEventListener('change', updatePreviewCanvas);
         });
 
-        // プレビュー描画のメイン関数
         async function updatePreviewCanvas() {
             const layout = document.querySelector('input[name="layout"]:checked').value;
             let canvasWidth, canvasHeight, slots = [];
@@ -147,7 +151,6 @@
             canvas.width = canvasWidth;
             canvas.height = canvasHeight;
             
-            // 画像の読み込みを待つためのPromiseを作成
             const imagePromises = previewSources.map(src => {
                 if (!src) return Promise.resolve(null);
                 return new Promise((resolve, reject) => {
@@ -158,7 +161,6 @@
                 });
             });
 
-            // 全ての画像の読み込みが完了してから描画する
             const loadedImages = await Promise.all(imagePromises);
             
             ctx.font = 'bold 16px sans-serif';
@@ -188,7 +190,6 @@
             });
         }
         
-        // 初期表示
         document.addEventListener('DOMContentLoaded', updatePreviewCanvas);
     </script>
 </body>
