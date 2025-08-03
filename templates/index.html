@@ -73,24 +73,34 @@
             text-align: center;
         }
 
+        /* ★変更点: クリアボタンのスタイルを状態別に定義 */
         .clear-slot-button {
             position: absolute;
             top: -10px;
             right: -10px;
             width: 24px;
             height: 24px;
-            background-color: #dc3545;
-            color: white;
             border: 2px solid white;
             border-radius: 50%;
             font-size: 14px;
             font-weight: bold;
             line-height: 20px;
             text-align: center;
-            cursor: pointer;
-            display: none; /* 初期状態では非表示 */
+            transition: background-color 0.2s;
+            /* 初期状態 (非アクティブ) */
+            background-color: #ccc;
+            color: #f0f0f0;
+            cursor: default;
+            pointer-events: none; /* クリックを無効化 */
         }
-        .clear-slot-button:hover {
+        .clear-slot-button.active {
+             /* アクティブ状態 */
+            background-color: #dc3545;
+            color: white;
+            cursor: pointer;
+            pointer-events: auto; /* クリックを有効化 */
+        }
+        .clear-slot-button.active:hover {
             background-color: #c82333;
         }
 
@@ -188,7 +198,7 @@
         const ctx = canvas.getContext('2d');
         let previewSources = new Array(5).fill(null);
 
-        // ★変更点: この関数内にクリアボタンを表示/非表示するロジックを追加
+        // ★変更点: クリアボタンの状態を切り替えるロジックに変更
         function handleFileSelect(index, input) {
             const filenameContainer = document.getElementById(`filename${index + 1}`);
             const slotPreview = document.getElementById(`slot-preview-${index + 1}`);
@@ -202,7 +212,7 @@
                     
                     slotPreview.style.backgroundImage = `url('${dataUrl}')`;
                     slotPreview.innerHTML = '';
-                    clearButton.style.display = 'block'; // ボタンを表示
+                    clearButton.classList.add('active'); // ボタンをアクティブ化
 
                     updatePreviewCanvas();
                 };
@@ -224,7 +234,7 @@
             filenameContainer.textContent = '未選択';
             slotPreview.style.backgroundImage = 'none';
             slotPreview.innerHTML = '<span>画像を選択</span>';
-            clearButton.style.display = 'none'; // ボタンを非表示
+            clearButton.classList.remove('active'); // ボタンを非アクティブ化
 
             updatePreviewCanvas();
         }
