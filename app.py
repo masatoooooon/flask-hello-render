@@ -2,24 +2,29 @@ import os
 import random
 import io
 from flask import Flask, render_template, request, send_file
-from PIL import Image, ImageDraw, ImageFont
+from PIL import Image
 from datetime import datetime
-from zoneinfo import ZoneInfo # ★変更点: タイムゾーンを扱うライブラリをインポート
+from zoneinfo import ZoneInfo
 
 app = Flask(__name__)
 
-# --- 画像処理関数 (変更なし) ---
 OUTPUT_SINGLE_SIZE = (1920, 1080)
 
 def generate_source_image(data):
     w, h = OUTPUT_SINGLE_SIZE
     if hasattr(data, 'filename') and data.filename != '':
         try:
-            image = Image.open(data.stream)
+            with Image.open(data.stream) as img:
+                image = img.copy()
             if image.height > image.width:
                 image = image.rotate(90, expand=True)
-            return image.resize((w, h), Image.Resampling.LANCZOS)
-        except:
+            image.thumbnail((w, h), Image.Resampling.LANCZOS)
+            background = Image.new('RGB', (w, h), (255, 255, 255))
+            paste_x = (w - image.width) // 2
+            paste_y = (h - image.height) // 2
+            background.paste(image, (paste_x, paste_y))
+            return background
+        except Exception:
             return None
     elif isinstance(data, tuple):
         return Image.new("RGB", (w, h), color=data)
@@ -48,7 +53,6 @@ def create_combined_image(final_sources, layout):
         combined_image.paste(image, (x_offset, y_offset))
     return combined_image
 
-# --- Flaskのルート部分 ---
 @app.route('/')
 def index():
     return render_template('index.html')
@@ -58,6 +62,8 @@ def combine():
     try:
         files = request.files.getlist('image_files')
         layout = request.form.get('layout')
+        # ★変更点: 圧縮レベルを取得 (デフォルトは85)
+        quality_level = int(request.form.get('quality', 85))
         
         if layout == "5x1": num_required = 5
         elif layout == "4x1": num_required = 4
@@ -78,10 +84,10 @@ def combine():
         combined_image = create_combined_image(final_sources, layout)
         
         img_io = io.BytesIO()
-        combined_image.save(img_io, 'JPEG', quality=95)
+        # ★変更点: qualityパラメータに選択された値を設定
+        combined_image.save(img_io, 'JPEG', quality=quality_level)
         img_io.seek(0)
         
-        # ★変更点: 日本時間(JST)を指定してタイムスタンプを生成
         jst = ZoneInfo("Asia/Tokyo")
         timestamp = datetime.now(jst).strftime("%y%m%d%H%M%S")
         download_filename = f'{layout}_{timestamp}.jpg'
@@ -96,7 +102,6 @@ def combine():
     except Exception as e:
         return f"エラーが発生しました: {e}", 500
 
-# --- Renderで動作させるための設定 ---
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
     app.run(host='0.0.0.0', port=port)
