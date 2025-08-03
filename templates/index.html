@@ -5,7 +5,26 @@
     <title>画像結合アプリ</title>
     <style>
         body { font-family: sans-serif; margin: 2em; }
-        .image-slot { border: 1px solid #ccc; padding: 1em; margin-bottom: 1em; }
+        .image-slot { 
+            border: 1px solid #ccc; 
+            padding: 1em; 
+            margin-bottom: 1em; 
+            display: flex; /* 横並びにするための設定 */
+            align-items: center; /* 上下中央揃え */
+        }
+        .image-slot label { margin-right: 1em; }
+        .image-preview {
+            max-width: 192px;
+            max-height: 108px;
+            border: 1px solid #ddd;
+            margin-left: 1em;
+            background-color: #f0f0f0;
+            min-height: 108px; /* 高さを固定 */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #888;
+        }
         .layout-options { margin-top: 1em; margin-bottom: 1em; }
     </style>
 </head>
@@ -18,23 +37,28 @@
         <div class="image-slots">
             <div class="image-slot">
                 <label for="image1">画像1:</label>
-                <input type="file" id="image1" name="image_files" accept="image/*">
+                <input type="file" id="image1" name="image_files" accept="image/*" onchange="previewImage(this, 'preview1')">
+                <img id="preview1" class="image-preview" src="" alt="画像1のプレビュー">
             </div>
             <div class="image-slot">
                 <label for="image2">画像2:</label>
-                <input type="file" id="image2" name="image_files" accept="image/*">
+                <input type="file" id="image2" name="image_files" accept="image/*" onchange="previewImage(this, 'preview2')">
+                <img id="preview2" class="image-preview" src="" alt="画像2のプレビュー">
             </div>
             <div class="image-slot">
                 <label for="image3">画像3:</label>
-                <input type="file" id="image3" name="image_files" accept="image/*">
+                <input type="file" id="image3" name="image_files" accept="image/*" onchange="previewImage(this, 'preview3')">
+                <img id="preview3" class="image-preview" src="" alt="画像3のプレビュー">
             </div>
             <div class="image-slot">
                 <label for="image4">画像4:</label>
-                <input type="file" id="image4" name="image_files" accept="image/*">
+                <input type="file" id="image4" name="image_files" accept="image/*" onchange="previewImage(this, 'preview4')">
+                <img id="preview4" class="image-preview" src="" alt="画像4のプレビュー">
             </div>
             <div class="image-slot">
                 <label for="image5">画像5:</label>
-                <input type="file" id="image5" name="image_files" accept="image/*">
+                <input type="file" id="image5" name="image_files" accept="image/*" onchange="previewImage(this, 'preview5')">
+                <img id="preview5" class="image-preview" src="" alt="画像5のプレビュー">
             </div>
         </div>
 
@@ -42,13 +66,43 @@
         <div class="layout-options">
             <input type="radio" id="layout_2x2" name="layout" value="2x2" checked>
             <label for="layout_2x2">2x2 (3840x2160px)</label>
+            <br>
             <input type="radio" id="layout_4x1" name="layout" value="4x1">
             <label for="layout_4x1">4x1 (7680x1080px)</label>
+            <br>
             <input type="radio" id="layout_5x1" name="layout" value="5x1">
             <label for="layout_5x1">5x1 (9600x1080px)</label>
         </div>
 
         <button type="submit" style="font-size: 1.2em; padding: 0.5em 1em;">画像を結合する</button>
     </form>
-</body>
+
+    <script>
+        function previewImage(input, previewId) {
+            const preview = document.getElementById(previewId);
+            if (input.files && input.files[0]) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    preview.src = e.target.result;
+                    preview.style.display = 'block';
+                };
+                reader.readAsDataURL(input.files[0]);
+            } else {
+                preview.src = "";
+                preview.style.display = 'block';
+            }
+        }
+
+        // 初期表示時にプレビューエリアにテキストを表示
+        document.addEventListener('DOMContentLoaded', function() {
+            const previews = document.querySelectorAll('.image-preview');
+            previews.forEach(p => {
+                p.alt = 'プレビュー'; // alt属性を更新
+                if (!p.src) {
+                    p.innerHTML = '<span>プレビュー</span>'; // テキストを表示
+                }
+            });
+        });
+    </script>
+    </body>
 </html>
