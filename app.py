@@ -3,7 +3,8 @@ import random
 import io
 from flask import Flask, render_template, request, send_file
 from PIL import Image, ImageDraw, ImageFont
-from datetime import datetime # ★変更点: datetimeライブラリをインポート
+from datetime import datetime
+from zoneinfo import ZoneInfo # ★変更点: タイムゾーンを扱うライブラリをインポート
 
 app = Flask(__name__)
 
@@ -80,19 +81,16 @@ def combine():
         combined_image.save(img_io, 'JPEG', quality=95)
         img_io.seek(0)
         
-        # ★変更点: ここからファイル名の生成ロジックを変更
-        # 現在の日付と時間を 'yymmddhhmmss' 形式の文字列で取得
-        # (hhは時、mmは分、ssは秒)
-        timestamp = datetime.now().strftime("%y%m%d%H%M%S")
-        
-        # 新しいファイル名を作成
+        # ★変更点: 日本時間(JST)を指定してタイムスタンプを生成
+        jst = ZoneInfo("Asia/Tokyo")
+        timestamp = datetime.now(jst).strftime("%y%m%d%H%M%S")
         download_filename = f'{layout}_{timestamp}.jpg'
         
         return send_file(
             img_io,
             mimetype='image/jpeg',
             as_attachment=True,
-            download_name=download_filename # ★変更点: 生成したファイル名を使用
+            download_name=download_filename
         )
 
     except Exception as e:
