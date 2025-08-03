@@ -23,39 +23,28 @@
             padding-bottom: 1em;
             justify-content: center;
         }
-
         .image-slot { 
             border: 1px solid #ccc; 
             padding: 1em;
             display: flex;
             flex-direction: column;
             align-items: center;
-            width: 180px;
+            flex: 1 1 180px;
+            min-width: 180px;
         }
         .slot-title { font-weight: bold; margin-bottom: 0.5em; }
 
-        /* ★変更点: slot-previewがボタンを兼ねるためのスタイル */
-        .slot-preview {
-            width: 160px;
-            height: 90px;
-            border: 2px dashed #ccc;
-            margin-top: 0.5em;
-            background-color: #f0f0f0;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: #888;
+        .file-select-button {
+            background-color: #007bff;
+            color: white;
+            padding: 8px 12px;
+            border-radius: 5px;
             cursor: pointer;
-            transition: background-color 0.2s;
-            /* 背景画像としてサムネイルを表示するための設定 */
-            background-size: contain;
-            background-repeat: no-repeat;
-            background-position: center;
+            text-align: center;
+            margin-top: 5px;
         }
-        .slot-preview:hover {
-            background-color: #e9e9e9;
-            border-color: #007bff;
-        }
+        .file-select-button:hover { background-color: #0056b3; }
+        input[type="file"] { display: none; }
         
         .filename-display {
             font-size: 0.8em;
@@ -64,6 +53,23 @@
             height: 2.5em;
             word-break: break-all;
             text-align: center;
+        }
+
+        .slot-preview {
+            width: 160px;
+            height: 90px;
+            border: 1px solid #ddd;
+            margin-top: 1em;
+            background-color: #f0f0f0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #888;
+            overflow: hidden;
+        }
+        .slot-preview img {
+            max-width: 100%;
+            max-height: 100%;
         }
 
         .center-container {
@@ -99,8 +105,7 @@
     <form action="/combine" method="post" enctype="multipart/form-data">
         
         <h3>1. 画像を選択してください</h3>
-        <div class="image-slots-container">
-            </div>
+        <div class="image-slots-container"></div>
 
         <div class="center-container">
             <h3>2. 出力レイアウトを選択してください</h3>
@@ -135,10 +140,9 @@
         const ctx = canvas.getContext('2d');
         let previewSources = new Array(5).fill(null);
 
-        // ★変更点: 個別サムネイルの更新ロジックを修正
         function handleFileSelect(index, input) {
             const filenameContainer = document.getElementById(`filename${index + 1}`);
-            const slotPreview = document.getElementById(`slot-preview-${index + 1}`);
+            const slotPreviewContainer = document.getElementById(`slot-preview-${index + 1}`);
 
             if (input.files && input.files[0]) {
                 const reader = new FileReader();
@@ -146,9 +150,10 @@
                     const dataUrl = e.target.result;
                     previewSources[index] = dataUrl;
                     
-                    // サムネイルエリアの背景画像として設定
-                    slotPreview.style.backgroundImage = `url('${dataUrl}')`;
-                    slotPreview.innerHTML = ''; // 中のテキストを消す
+                    slotPreviewContainer.innerHTML = '';
+                    const img = document.createElement('img');
+                    img.src = dataUrl;
+                    slotPreviewContainer.appendChild(img);
 
                     updatePreviewCanvas();
                 };
@@ -157,9 +162,7 @@
             } else {
                 previewSources[index] = null;
                 filenameContainer.textContent = '未選択';
-                // サムネイルエリアをデフォルトに戻す
-                slotPreview.style.backgroundImage = 'none';
-                slotPreview.innerHTML = '<span>画像を選択</span>';
+                slotPreviewContainer.innerHTML = '<span>サムネイル</span>';
                 updatePreviewCanvas();
             }
         }
@@ -209,17 +212,36 @@
             ctx.textBaseline = 'middle';
             
             slots.forEach((slot, index) => {
-                const img = loadedImages[index];
-                if (img) {
-                    const hRatio = slot.w / img.width;
-                    const vRatio = slot.h / img.height;
+                let img = loadedImages[index];
+
+                // ★ここからが変更点★
+                let imageToDraw = img;
+                if (img && img.height > img.width) {
+                    // 縦長画像の場合、オフスクリーンキャンバスを使って回転させる
+                    const offscreenCanvas = document.createElement('canvas');
+                    const offscreenCtx = offscreenCanvas.getContext('2d');
+                    
+                    offscreenCanvas.width = img.height;
+                    offscreenCanvas.height = img.width;
+                    
+                    offscreenCtx.translate(offscreenCanvas.width / 2, offscreenCanvas.height / 2);
+                    offscreenCtx.rotate(90 * Math.PI / 180); //反時計回りに90度
+                    offscreenCtx.drawImage(img, -img.width / 2, -img.height / 2);
+                    
+                    imageToDraw = offscreenCanvas; // 描画ソースを回転済みのキャンバスに差し替える
+                }
+                // ★ここまでが変更点★
+
+                if (imageToDraw) {
+                    const hRatio = slot.w / imageToDraw.width;
+                    const vRatio = slot.h / imageToDraw.height;
                     const ratio = Math.min(hRatio, vRatio);
-                    const centerShift_x = (slot.w - img.width * ratio) / 2;
-                    const centerShift_y = (slot.h - img.height * ratio) / 2;
+                    const centerShift_x = (slot.w - imageToDraw.width * ratio) / 2;
+                    const centerShift_y = (slot.h - imageToDraw.height * ratio) / 2;
                     ctx.fillStyle = '#f0f0f0';
                     ctx.fillRect(slot.x, slot.y, slot.w, slot.h);
-                    ctx.drawImage(img, 0, 0, img.width, img.height,
-                                  slot.x + centerShift_x, slot.y + centerShift_y, img.width * ratio, img.height * ratio);
+                    ctx.drawImage(imageToDraw, 0, 0, imageToDraw.width, imageToDraw.height,
+                                  slot.x + centerShift_x, slot.y + centerShift_y, imageToDraw.width * ratio, imageToDraw.height * ratio);
                 } else {
                     ctx.fillStyle = '#f0f0f0';
                     ctx.fillRect(slot.x, slot.y, slot.w, slot.h);
@@ -231,27 +253,23 @@
             });
         }
         
-        // ★変更点: 動的に生成するHTMLの構造を修正
         document.addEventListener('DOMContentLoaded', () => {
             const container = document.querySelector('.image-slots-container');
             if (container.innerHTML.trim() === '') {
                 for (let i = 1; i <= 5; i++) {
                     const slot = document.createElement('div');
                     slot.className = 'image-slot';
-
-                    // inputをlabelで囲む代わりに、labelのfor属性で紐付ける
                     slot.innerHTML = `
                         <label class="slot-title">画像${i}</label>
-                        <label for="image${i}" id="slot-preview-${i}" class="slot-preview">
-                            <span>画像を選択</span>
-                        </label>
+                        <label for="image${i}" class="file-select-button">ファイルを選択</label>
                         <input type="file" id="image${i}" name="image_files" accept="image/*" style="display: none;">
                         <div id="filename${i}" class="filename-display">未選択</div>
+                        <div id="slot-preview-${i}" class="slot-preview">
+                            <span>サムネイル</span>
+                        </div>
                     `;
-                    
                     const input = slot.querySelector(`#image${i}`);
                     input.addEventListener('change', (event) => handleFileSelect(i - 1, event.target));
-
                     container.appendChild(slot);
                 }
             }
