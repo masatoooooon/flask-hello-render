@@ -4,15 +4,26 @@
     <meta charset="UTF-8">
     <title>画像結合アプリ</title>
     <style>
-        body { font-family: sans-serif; margin: 2em; max-width: 1200px; }
-        h3 { border-bottom: 2px solid #007bff; padding-bottom: 0.3em; margin-top: 2em;}
+        body { 
+            font-family: sans-serif; 
+            margin: 0 auto; /* ページ全体を中央揃え */
+            padding: 2em;
+            max-width: 1200px; 
+        }
+        h3 { 
+            border-bottom: 2px solid #007bff; 
+            padding-bottom: 0.3em; 
+            margin-top: 2.5em; /* 各セクションのスペースを調整 */
+            text-align: center; /* ヘッダーテキストを中央揃え */
+        }
         
         .image-slots-container {
             display: flex;
             flex-wrap: nowrap;
             gap: 1em;
-            padding-bottom: 1em;
+            padding: 1em 0;
             overflow-x: auto;
+            justify-content: center; /* スロット全体を中央に配置 */
         }
         .image-slot { 
             border: 1px solid #ccc; 
@@ -46,23 +57,40 @@
             text-align: center;
         }
         
-        /* ★変更点: レイアウトオプションを横並びにする設定 */
+        /* ★変更点: 中央揃えのためのコンテナ */
+        .center-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
         .layout-options { 
             margin-top: 1em; 
             margin-bottom: 1em; 
-            display: flex; /* 横並びにする */
-            gap: 2em;      /* 各項目間のスペース */
-            align-items: center;
+            display: flex;
+            gap: 2em;
         }
-        .submit-button { font-size: 1.2em; padding: 0.5em 1em; margin-top: 1em; cursor: pointer; }
-        #output-preview-canvas { border: 2px solid #007bff; background-color: #f0f0f0; }
+        .submit-button { 
+            font-size: 1.2em; 
+            padding: 0.5em 1em; 
+            margin-top: 2em; 
+            cursor: pointer; 
+        }
+        #output-preview-canvas { 
+            border: 2px solid #007bff; 
+            background-color: #f0f0f0;
+            margin-top: 1em;
+        }
     </style>
 </head>
 <body>
-    <h1>画像結合アプリ</h1>
+    <div style="text-align: center;">
+        <h1>画像結合アプリ</h1>
+    </div>
     
-    <form action="/combine" method="post" enctype="multipart/form-data">
+    <form action="/combine" method="post" enctype="multipart/form-data" class="center-container">
         
+        <h3>1. 画像を選択してください</h3>
         <div class="image-slots-container">
             <script>
                 for (let i = 1; i <= 5; i++) {
@@ -78,26 +106,29 @@
             </script>
         </div>
 
-        <h3>2. 出力レイアウトを選択してください</h3>
-        <div class="layout-options">
-            <span>
-                <input type="radio" id="layout_2x2" name="layout" value="2x2" checked onchange="updatePreviewCanvas()">
-                <label for="layout_2x2">2x2 (3840x2160px)</label>
-            </span>
-            <span>
-                <input type="radio" id="layout_4x1" name="layout" value="4x1" onchange="updatePreviewCanvas()">
-                <label for="layout_4x1">4x1 (7680x1080px)</label>
-            </span>
-            <span>
-                <input type="radio" id="layout_5x1" name="layout" value="5x1" onchange="updatePreviewCanvas()">
-                <label for="layout_5x1">5x1 (9600x1080px)</label>
-            </span>
+        <div class="center-container">
+            <h3>2. 出力レイアウトを選択してください</h3>
+            <div class="layout-options">
+                <span>
+                    <input type="radio" id="layout_2x2" name="layout" value="2x2" checked onchange="updatePreviewCanvas()">
+                    <label for="layout_2x2">2x2 (3840x2160px)</label>
+                </span>
+                <span>
+                    <input type="radio" id="layout_4x1" name="layout" value="4x1" onchange="updatePreviewCanvas()">
+                    <label for="layout_4x1">4x1 (7680x1080px)</label>
+                </span>
+                <span>
+                    <input type="radio" id="layout_5x1" name="layout" value="5x1" onchange="updatePreviewCanvas()">
+                    <label for="layout_5x1">5x1 (9600x1080px)</label>
+                </span>
+            </div>
         </div>
 
-        <h3>3. プレビュー</h3>
-        <canvas id="output-preview-canvas"></canvas>
+        <div class="center-container">
+            <h3>3. プレビュー</h3>
+            <canvas id="output-preview-canvas"></canvas>
+        </div>
         
-        <br>
         <button type="submit" class="submit-button">画像を結合する</button>
     </form>
 
