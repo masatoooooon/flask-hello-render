@@ -16,6 +16,14 @@
             margin-top: 1.5em;
         }
         
+        /* ★新規: 説明文のスタイル */
+        .section-description {
+            font-size: 0.9em;
+            color: #6c757d; /* 少し落ち着いた色 */
+            margin-top: 0.5em;
+            margin-bottom: 1.5em;
+        }
+
         .image-slots-container {
             display: flex;
             flex-wrap: wrap;
@@ -33,8 +41,7 @@
             min-width: 180px;
         }
         .slot-title { font-weight: bold; margin-bottom: 0.5em; }
-        
-        /* ★変更点: 統合されたサムネイル兼ボタンのスタイル */
+
         .slot-preview {
             width: 160px;
             height: 90px;
@@ -99,6 +106,9 @@
     <form action="/combine" method="post" enctype="multipart/form-data">
         
         <h3>1. 画像を選択してください</h3>
+        <p class="section-description">
+            結合したい画像を5つまで選択してください。選択されなかった部分は、保存時にランダムな色で自動的に補完されます。
+        </p>
         <div class="image-slots-container"></div>
 
         <h3>2. 出力レイアウトを選択してください</h3>
@@ -134,7 +144,6 @@
         const ctx = canvas.getContext('2d');
         let previewSources = new Array(5).fill(null);
 
-        // ★変更点: ファイル選択時の処理を、統合UIに合わせて修正
         function handleFileSelect(index, input) {
             const filenameContainer = document.getElementById(`filename${index + 1}`);
             const slotPreview = document.getElementById(`slot-preview-${index + 1}`);
@@ -244,31 +253,6 @@
             });
         }
         
-        // ★変更点: 動的に生成するHTMLの構造を、統合UIに合わせて修正
         document.addEventListener('DOMContentLoaded', () => {
             const container = document.querySelector('.image-slots-container');
-            if (container.innerHTML.trim() === '') {
-                for (let i = 1; i <= 5; i++) {
-                    const slot = document.createElement('div');
-                    slot.className = 'image-slot';
-
-                    slot.innerHTML = `
-                        <label class="slot-title">画像${i}</label>
-                        <label for="image${i}" id="slot-preview-${i}" class="slot-preview">
-                            <span>画像を選択</span>
-                        </label>
-                        <input type="file" id="image${i}" name="image_files" accept="image/*" style="display: none;">
-                        <div id="filename${i}" class="filename-display">未選択</div>
-                    `;
-                    
-                    const input = slot.querySelector(`#image${i}`);
-                    input.addEventListener('change', (event) => handleFileSelect(i - 1, event.target));
-
-                    container.appendChild(slot);
-                }
-            }
-            updatePreviewCanvas();
-        });
-    </script>
-</body>
-</html>
+            if (container.innerHTML.trim() === '')
