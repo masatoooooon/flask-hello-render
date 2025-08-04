@@ -8,6 +8,7 @@ from zoneinfo import ZoneInfo
 
 app = Flask(__name__)
 
+# --- 画像処理関数 (変更なし) ---
 OUTPUT_SINGLE_SIZE = (1920, 1080)
 
 def generate_source_image(data):
@@ -16,22 +17,16 @@ def generate_source_image(data):
         try:
             with Image.open(data.stream) as img:
                 image = img.copy()
-            
             if image.height > image.width:
                 image = image.rotate(90, expand=True)
-            
             image.thumbnail((w, h), Image.Resampling.LANCZOS)
-            
             background = Image.new('RGB', (w, h), (255, 255, 255))
             paste_x = (w - image.width) // 2
             paste_y = (h - image.height) // 2
             background.paste(image, (paste_x, paste_y))
-            
             return background
-        except Exception as e:
-            print(f"Error processing image: {e}")
+        except Exception:
             return None
-            
     elif isinstance(data, tuple):
         return Image.new("RGB", (w, h), color=data)
     return None
@@ -47,7 +42,6 @@ def create_combined_image(final_sources, layout):
     else: # "2x2"
         combined_image = Image.new("RGB", (w * 2, h * 2))
         num_to_use = 4
-
     for i in range(num_to_use):
         data = final_sources[i]
         image = generate_source_image(data)
@@ -60,9 +54,15 @@ def create_combined_image(final_sources, layout):
         combined_image.paste(image, (x_offset, y_offset))
     return combined_image
 
+# --- Flaskのルート部分 ---
 @app.route('/')
 def index():
     return render_template('index.html')
+
+# ★変更点: この関数を追加
+@app.route('/manual')
+def manual():
+    return render_template('manual.html')
 
 @app.route('/combine', methods=['POST'])
 def combine():
@@ -113,9 +113,4 @@ def combine():
         )
 
     except Exception as e:
-        print(f"Error in /combine route: {e}")
-        return f"エラーが発生しました: {e}", 500
-
-if __name__ == '__main__':
-    port = int(os.environ.get('PORT', 5000))
-    app.run(host='0.0.0.0', port=port)
+        return f"エラーが発生しました:
