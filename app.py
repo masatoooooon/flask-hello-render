@@ -59,7 +59,6 @@ def create_combined_image(final_sources, layout):
 def index():
     return render_template('index.html')
 
-# ★変更点: この関数を追加
 @app.route('/manual')
 def manual():
     return render_template('manual.html')
@@ -113,4 +112,10 @@ def combine():
         )
 
     except Exception as e:
-        return f"エラーが発生しました:
+        # ★変更点: この行の閉じ忘れを修正しました
+        return f"エラーが発生しました: {e}", 500
+
+# --- Renderで動作させるための設定 (変更なし) ---
+if __name__ == '__main__':
+    port = int(os.environ.get('PORT', 5000))
+    app.run(host='0.0.0.0', port=port)
