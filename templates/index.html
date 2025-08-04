@@ -39,8 +39,7 @@
             flex: 1 1 180px;
             min-width: 180px;
         }
-        
-        /* ★変更点: .slot-title のCSSを削除 */
+        .slot-title { font-weight: bold; margin-bottom: 0.5em; }
 
         .slot-preview {
             width: 160px;
@@ -127,6 +126,10 @@
 </head>
 <body>
     
+    <div style="text-align: right; margin-bottom: 1em;">
+        <a href="/manual">使い方はこちら</a>
+    </div>
+
     <form action="/combine" method="post" enctype="multipart/form-data">
         
         <h3>1. 画像を選択してください</h3>
@@ -205,7 +208,6 @@
                 previewSources[index] = null;
                 filenameContainer.textContent = '未選択';
                 slotPreview.style.backgroundImage = 'none';
-                // ★変更点: クリア時も番号付きテキストに戻す
                 slotPreview.innerHTML = `<span>画像${index + 1}を選択</span>`;
                 updatePreviewCanvas();
             }
@@ -221,7 +223,6 @@
                 const slotPreview = document.getElementById(`slot-preview-${i + 1}`);
                 if(slotPreview) {
                     slotPreview.style.backgroundImage = 'none';
-                    // ★変更点: 全体クリア時も番号付きテキストに戻す
                     slotPreview.innerHTML = `<span>画像${i + 1}を選択</span>`;
                 }
             }
@@ -314,7 +315,6 @@
                 for (let i = 1; i <= 5; i++) {
                     const slot = document.createElement('div');
                     slot.className = 'image-slot';
-                    // ★変更点: slot-titleを削除し、span内のテキストを変更
                     slot.innerHTML = `
                         <label for="image${i}" id="slot-preview-${i}" class="slot-preview">
                             <span>画像${i}を選択</span>
